@@ -18,6 +18,116 @@ fun main(args: Array<String>) {
     app.show()
 }
 
+class Diagram(private val data: Pair<String, Map<String, Double>>) : JPanel() {
+    private val extraSpace = 20
+
+    private fun maxOfData(): Double {
+        var maxi = .0
+        data.second.forEach {
+            maxi = max(maxi, it.value)
+        }
+        return maxi
+    }
+
+    private fun colHeightGenerator(): List<Double> {
+        val columns: MutableList<Double> = mutableListOf()
+        data.second.forEach {
+            columns.add(it.value)
+        }
+        return columns
+    }
+
+    override fun paint(g: Graphics) {
+        super.paint(g)
+        drawAxis(g as Graphics2D)
+        drawNotches(g)
+        drawColumns(g)
+    }
+
+
+    private fun drawAxis(g: Graphics2D) {
+        g.stroke = BasicStroke(3F)
+        g.color = Color.BLACK
+        g.drawLine(width / (extraSpace / 2), 0, width / (extraSpace / 2), height - height / extraSpace)
+        g.drawLine(width / (extraSpace / 2), height - height / extraSpace, width, height - height / extraSpace)
+    }
+
+    private fun drawNotches(g: Graphics2D) {
+        val notchLen = 5
+        val numberOfNotchesX = data.second.size
+        var numberOfNotchesY = 10
+        val maxUserValue = maxOfData()
+        val tail = 10.0.pow((maxUserValue.toString().length - 4).toDouble()).toInt()
+        val maxNotchValue: Int
+        if (maxUserValue >= 100)
+            maxNotchValue = (maxUserValue.toInt() / tail + 1) * tail
+        else {
+            maxNotchValue = maxUserValue.toInt() + 5 - maxUserValue.toInt() % 5
+            numberOfNotchesY = 5
+        }
+        g.color = Color.BLACK
+        repeat(numberOfNotchesY)
+        {
+            g.drawLine(
+                width / (extraSpace / 2) - notchLen,
+                height - height / extraSpace - (it + 1) * (height - height / extraSpace) / numberOfNotchesY,
+                width / (extraSpace / 2) + notchLen,
+                height - height / extraSpace - (it + 1) * (height - height / extraSpace) / numberOfNotchesY
+            )
+            val fontSize = width.toFloat() / 200
+            g.stroke = BasicStroke(fontSize)
+            val number = maxNotchValue * (it + 1) / (numberOfNotchesY)
+            g.drawString(
+                number.toString(),
+                width / (extraSpace / 2) - notchLen - 2 * number.toString().length * fontSize.toInt(),
+                height - height / extraSpace - (it + 1) * (height - height / extraSpace) / numberOfNotchesY + (height - height / extraSpace) / numberOfNotchesY / 4
+            )
+            g.stroke = BasicStroke(2F)
+        }
+        repeat(numberOfNotchesX){
+            val xx = width / (extraSpace / 2) + (it + 1) * (width - width / (extraSpace / 2)) / (numberOfNotchesX)
+            g.stroke = BasicStroke(2F)
+            g.drawLine(
+                xx,
+                height - height / extraSpace + notchLen,
+                xx,
+                height - height / extraSpace - notchLen
+            )
+        }
+    }
+
+    private fun drawColumns(g:Graphics2D){
+        var i=0
+        val numberOfNotchesX = data.second.size
+        val maxNotchValue: Int
+        val maxUserValue = maxOfData()
+        val tail = 10.0.pow((maxUserValue.toString().length - 4).toDouble()).toInt()
+        maxNotchValue = if (maxUserValue >= 100)
+            (maxUserValue.toInt() / tail + 1) * tail
+        else
+            maxUserValue.toInt() + 5 - maxUserValue.toInt() % 5
+
+        colHeightGenerator().forEach{
+            val xx = width / (extraSpace / 2) + (i + 1) * (width - width / (extraSpace / 2)) / (numberOfNotchesX)
+            val col = Rectangle2D.Double(     xx - (width.toDouble() - width / (extraSpace / 2))*3 / (4 * numberOfNotchesX ),
+                height.toDouble() - height / extraSpace- (height - height / extraSpace)*it/maxNotchValue,
+                (width.toDouble() - width / (extraSpace / 2)) / (2*numberOfNotchesX),
+                (height - height / extraSpace)*it/maxNotchValue)
+            g.stroke = BasicStroke(4F)
+            g.draw(col)
+            g.stroke = BasicStroke(2F)
+            g.color = Color.RED
+            g.fill(col)
+            g.color = Color.BLACK
+            g.font = Font("Mistral", Font.PLAIN, 20)
+            g.drawString(
+                (++i).toString(),
+                xx - (width - width / (extraSpace / 2)) / (2 * numberOfNotchesX)-2,
+                height - height / extraSpace + height / (extraSpace * 1.5).toInt()
+            )
+        }
+    }
+}
 
 
 class CircleDiagram(private val data: Pair<String, Map<String, Double>>) : JPanel() {
@@ -97,6 +207,7 @@ class DiagramBuilder(private val data: Pair<String, Map<String, Double>>) {
     private var mainWindow: JFrame? = null
     private var nameLabel: JLabel? = null
     private var circleDiagram: CircleDiagram? = null
+    private var diagram: Diagram? = null
     private var backgrColorRed: Int = 255
     private var backgrColorGreen: Int = 255
     private var backgrColorBlue: Int = 255
@@ -152,6 +263,11 @@ class DiagramBuilder(private val data: Pair<String, Map<String, Double>>) {
         val buttonCircleDiagram = JButton("Круговая диаграмма")
         verticalLayout.add(buttonCircleDiagram)
         buttonCircleDiagram.addActionListener { drawCircleDiagram() }
+
+        val buttonDiagram = JButton("Диаграмма")
+        verticalLayout.add(buttonDiagram)
+        buttonDiagram.addActionListener { drawDiagram() }
+        verticalLayout.add(Box.createVerticalStrut(mainWindow!!.height / 20))
 
         val buttonSave = JButton("Сохранить картинку")
         verticalLayout.add(buttonSave)
@@ -273,6 +389,14 @@ class DiagramBuilder(private val data: Pair<String, Map<String, Double>>) {
         mainWindow?.isVisible = true
     }
 
+    private fun drawDiagram() {
+        if (mainWindow!!.contentPane.components.size == 4)
+            mainWindow!!.contentPane.remove(mainWindow!!.contentPane.components.last())
+        diagram = Diagram(data)
+        diagram?.background = Color(backgrColorRed, backgrColorGreen, backgrColorBlue)
+        mainWindow!!.contentPane.add(diagram)
+        mainWindow?.isVisible = true
+    }
 
     private fun getScreenShot(component: Component): BufferedImage? {
         val ge = GraphicsEnvironment.getLocalGraphicsEnvironment()
