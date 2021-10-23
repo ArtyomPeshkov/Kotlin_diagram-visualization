@@ -1,5 +1,7 @@
 import java.io.File
 
+data  class UserInput(val name: String,val data: Map<String, Double>)
+
 fun readFile(): File {
     println("Введите имя файла:")
     var file= readLine()
@@ -10,6 +12,7 @@ fun readFile(): File {
     return File(file)
 }
 
+
 fun fieldChecker(): String {
     println("Введите поле:")
     var field = readLine()
@@ -19,7 +22,6 @@ fun fieldChecker(): String {
     }
     return field
 }
-
 fun valueChecker(): String {
     println("Введите значение:")
     var value = readLine()
@@ -30,7 +32,7 @@ fun valueChecker(): String {
     return value
 }
 
-fun userInputData(): Pair<String, Map<String, Double>> {
+fun userInputData(): UserInput {
     val res: MutableMap<String, Double> = mutableMapOf()
     println("Введите название диаграммы")
     var name = readLine()
@@ -39,9 +41,9 @@ fun userInputData(): Pair<String, Map<String, Double>> {
         name = readLine()
     }
 
-    println("Введите количество полей, по которым Вы хотите построить диаграмму (не более 20)")
+    println("Введите количество полей, по которым Вы хотите построить диаграмму (не более 100)")
     var number = readLine()
-    while (number == null || number.toIntOrNull() == null || number.toInt() < 0 || number.toInt() > 20) {
+    while (number == null || number.toIntOrNull() == null || number.toInt() < 0 || number.toInt() > 100) {
         println("Введите корректное число")
         number = readLine()
     }
@@ -53,10 +55,11 @@ fun userInputData(): Pair<String, Map<String, Double>> {
         val value = valueChecker()
         res[field] = value.toDouble()
     }
-    return Pair(name, res)
+    return UserInput(name, res)
 }
+data class OneFileString(val field: String, val value: Double)
 
-fun processFileString(input: String,stringNumber:Int): Pair<String, Double> {
+fun processFileString(input: String,stringNumber:Int): OneFileString {
     var userInput: String? = input
     while (userInput == null || userInput.split(';').size != 2) {
         println("Что-то пошло не так, строка $stringNumber не соответствует формату: 'поле';'число'")
@@ -75,12 +78,11 @@ fun processFileString(input: String,stringNumber:Int): Pair<String, Double> {
         println("Ошибка в значении поля($field) ($stringNumber строка), введите новое значение или закройте программу и проверьте файл")
         value = valueChecker()
     }
-    return Pair(field, value.toDouble())
+    return OneFileString(field, value.toDouble())
 
 }
 
-
-fun processFile(): Pair<String, Map<String, Double>> {
+fun processFile(): UserInput {
     var userInputFile = readFile()
     var probablyBadInput  = userInputFile.readLines()
     var fileStrings:MutableList<String> = mutableListOf()
@@ -88,9 +90,9 @@ fun processFile(): Pair<String, Map<String, Double>> {
         if (index==0 || s.isNotBlank())
             fileStrings.add(probablyBadInput[index])
     }
-    while (fileStrings.size>21)
+    while (fileStrings.size>101)
     {
-        println("В вашем файле слишком много строк, строк должно быть не более 21 (название + 20 полей), попробуйте другой файл или исправьте ошибку")
+        println("В вашем файле слишком много строк, строк должно быть не более 101 (название + 100 полей), попробуйте другой файл или исправьте ошибку")
         userInputFile = readFile()
         probablyBadInput  = userInputFile.readLines()
         fileStrings = mutableListOf()
@@ -109,12 +111,13 @@ fun processFile(): Pair<String, Map<String, Double>> {
     val res:MutableMap<String,Double> = mutableMapOf()
     fileStrings.drop(1).forEachIndexed{index,it ->
         val stringOfFile = processFileString(it,index+1)
-        res[stringOfFile.first]=stringOfFile.second
+        res[stringOfFile.field]=stringOfFile.value
     }
-    return Pair(name,res)
+    return UserInput(name,res)
 }
 
-fun inputData(): Pair<String, Map<String, Double>> {
+
+fun inputData(): UserInput {
     println("Диаграмма строится по списку параметров и значений для них.")
     println("Если Вы хотите считывать данные из файла, напишите 'file', если же Вы хотите прописать их вручную - 'myInp'.")
     while (true) {
@@ -122,7 +125,7 @@ fun inputData(): Pair<String, Map<String, Double>> {
             "file", "File", "FILE" -> {
                 println("Файл должен иметь следующий вид:")
                 println("Первая строка - название(любая непустая строка)")
-                println("Каждая следующая строка должна иметь вид: название поля(непустая строка) и значение для этого поля(число), записанные без пробелов через точку с запятой(;).")
+                println("Каждая следующая строка должна иметь вид: название категории(непустая строка) и значение для этого категории(число), записанные без пробелов через точку с запятой(;).")
                 return processFile()
             }
             "myInp", "MyInp", "MYINP" -> {
