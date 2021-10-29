@@ -4,33 +4,48 @@ import javax.swing.JPanel
 import kotlin.math.pow
 import kotlin.math.sign
 
-class Diagram(private val data: Map<String,Double>) : JPanel() {
+class Diagram(private val data: Map<String,List<Double>>) : JPanel() {
     private var extraSpaceX = 20
     private var extraSpaceY = 20
     private var extraSpace = 20
+    private val notchLen = 5
+    private val numberOfNotchesX = data.size
+    private var numberOfNotchesY = 10
 
     private fun maxOfData(): Double {
-        return data.values.maxOrNull() ?: 0.0
+        return data.values.maxOf{ it.sum() }
     }
 
-
+    /**
+    @brief
+    Функция считает высоты столбцов диаграммы
+     */
     private fun colHeightGenerator(): List<Double> {
         val columns: MutableList<Double> = mutableListOf()
-        columns.addAll(data.values)
+        columns.addAll(List(data.values.size){
+            data.values.elementAt(it).sum()
+        })
         return columns
     }
 
+    /**
+    @brief
+    Функция вывзывает все методы необходимые для рисования
+     */
     override fun paint(g: Graphics) {
         super.paint(g)
         extraSpace = 20
-        extraSpaceX = maxOfData().toInt().toString().length*g.font.size
+        extraSpaceX = (maxOfData().toString().length-1)*g.font.size
         extraSpaceY = height/extraSpace
         drawAxis(g as Graphics2D)
         drawNotches(g)
         drawColumns(g)
     }
 
-
+    /**
+    @brief
+    Функция отрисовывает оси
+     */
     private fun drawAxis(g: Graphics2D) {
         g.stroke = BasicStroke(3F)
         g.color = Color.BLACK
@@ -38,12 +53,13 @@ class Diagram(private val data: Map<String,Double>) : JPanel() {
         g.drawLine(extraSpaceX, height - extraSpaceY, width, height - extraSpaceY)
     }
 
+    /**
+    @brief
+    Функция рисует засечки на осях в зависимости от размера диапазона и количества полей
+     */
     private fun drawNotches(g: Graphics2D) {
-        val notchLen = 5
-        val numberOfNotchesX = data.size
-        var numberOfNotchesY = 10
         val maxUserValue = maxOfData()
-        val tail = 10.0.pow((maxUserValue.toString().length - 4).toDouble()).toInt()
+        val tail = 10.0.pow((maxUserValue.toInt().toString().length - 2).toDouble()).toInt()
         val maxNotchValue: Int
         if (maxUserValue >= 100)
             maxNotchValue = (maxUserValue.toInt() / tail + 1) * tail
@@ -54,11 +70,12 @@ class Diagram(private val data: Map<String,Double>) : JPanel() {
         g.color = Color.BLACK
         repeat(numberOfNotchesY)
         {
+            val hh=height - extraSpaceY - (it + 1) * (height - extraSpaceY) / numberOfNotchesY
             g.drawLine(
                 extraSpaceX - notchLen,
-                height - extraSpaceY - (it + 1) * (height - extraSpaceY) / numberOfNotchesY,
+                hh,
                 extraSpaceX + notchLen,
-                height - extraSpaceY - (it + 1) * (height - extraSpaceY) / numberOfNotchesY
+                hh
             )
             val fontSize = width.toFloat() / 200
             g.stroke = BasicStroke(fontSize)
@@ -66,7 +83,7 @@ class Diagram(private val data: Map<String,Double>) : JPanel() {
             g.drawString(
                 number.toString(),
                 1,
-                height - extraSpaceY - (it + 1) * (height - extraSpaceY) / numberOfNotchesY + (height - extraSpaceY) / numberOfNotchesY / 4
+                hh + (height - extraSpaceY) / numberOfNotchesY / 4
             )
             g.stroke = BasicStroke(2F)
         }
@@ -82,12 +99,15 @@ class Diagram(private val data: Map<String,Double>) : JPanel() {
         }
     }
 
+    /**
+    @brief
+    Функция рисует столбики диаграммы и подписывает их под осью
+     */
     private fun drawColumns(g: Graphics2D) {
         var i = 0
-        val numberOfNotchesX = data.size
         val maxNotchValue: Int
         val maxUserValue = maxOfData()
-        val tail = 10.0.pow((maxUserValue.toString().length - 4).toDouble()).toInt()
+        val tail = 10.0.pow((maxUserValue.toInt().toString().length - 2).toDouble()).toInt()
         maxNotchValue = if (maxUserValue >= 100)
             (maxUserValue.toInt() / tail + 1) * tail
         else

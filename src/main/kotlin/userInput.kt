@@ -1,10 +1,16 @@
 import java.io.File
 
-data  class UserInput(val name: String,val data: Map<String, Double>, val scatterPlot: Boolean)
+data class UserInput(val name: String, val data: Map<String, List<Double>>, val scatterPlot: Boolean)
 
+/**
+@brief
+Функция проверки существования файла
+@return
+Возвращает файл с входными данными
+ */
 fun readFile(): File {
     println("Введите имя файла:")
-    var file= readLine()
+    var file = readLine()
     while (file == null || !File(file).exists()) {
         println("Такого файла не существует! Попробуйте снова.")
         file = readLine()
@@ -12,7 +18,12 @@ fun readFile(): File {
     return File(file)
 }
 
-
+/**
+@brief
+Проверка на то, что поле не пустое
+@return
+Непустое поле
+ */
 fun fieldChecker(): String {
     println("Введите поле:")
     var field = readLine()
@@ -22,19 +33,34 @@ fun fieldChecker(): String {
     }
     return field
 }
+
+/**
+@brief
+Проверка на то, что значение не пустое
+@return
+Возвращает непустое значение
+ */
 fun valueChecker(): String {
     println("Введите значение:")
     var value = readLine()
-    while (value == null || value.toDoubleOrNull() == null || value.toDouble()<.0 || value.toDouble()>99999999) {
+    while (value == null || value.toDoubleOrNull() == null || value.toDouble() < .0 || value.toDouble() > 99999999) {
         println("Введите корректное значение (не более 99999999)")
         value = readLine()
     }
     return value
 }
 
+/**
+@brief
+Функция ручного ввода данных
+@detailed
+Функция запрашивает название диаграмм, поля и значения для них и, чтобы потом передать их для построения диаграмм
+@return
+Функция возвращает имя диаграммы, данные для построения и информацию о том, можно ли построить диаграмму рассеяния
+ */
 fun userInputData(): UserInput {
-    val res: MutableMap<String, Double> = mutableMapOf()
-    var scatterPlot=true
+    val res: MutableMap<String, MutableList<Double>> = mutableMapOf()
+    var scatterPlot = true
     println("Введите название диаграммы")
     var name = readLine()
     while (name.isNullOrBlank()) {
@@ -53,55 +79,78 @@ fun userInputData(): UserInput {
     repeat(number.toInt())
     {
         val field = fieldChecker()
-        if (field.toDoubleOrNull() == null)
-            scatterPlot=false
+        if (field.toDoubleOrNull() == null || field.toDouble().toLong() > 99999999)
+            scatterPlot = false
+        if (!res.containsKey(field))
+            res[field] = mutableListOf()
         val value = valueChecker()
-        res[field] = value.toDouble()
+        res[field]?.add("%.2f".format(value.toFloat()).replace(',','.').toDouble())
     }
-    return UserInput(name, res,scatterPlot)
+    return UserInput(name, res, scatterPlot)
 }
+
 data class OneFileString(val field: String, val value: Double)
 
-fun processFileString(input: String,stringNumber:Int): OneFileString {
-    var userInput: String? = input
-    while (userInput == null || userInput.split(';').size != 2) {
-        println("Что-то пошло не так, строка $stringNumber не соответствует формату: 'поле';'число'")
-        println("Введите правильную строку вручную или завершите выполнение программы и исправьте файл")
-        userInput = readLine()
+/**
+@brief
+Функция обработки строк файла
+@detailed
+Функция получает 2 соседние строки (поле и значение) и проверяет их корректность, после чего возвращает их или выдаёт ошибку
+с указанием строки, где произошёл
+@param
+Пара соседних строк файла и их номера
+@return
+Функция возвращает проверенные поле и значение
+ */
+fun processFileString(input: Pair<String, String>, stringField: Int, stringValue: Int): OneFileString {
+    var userInput: Pair<String, String>? = input
+    while (userInput == null) {
+        println("Что-то пошло не так, в строках $stringField и $stringValue не соответствует формату")
+        println("Введите правильные строки вручную или завершите выполнение программы и исправьте файл")
+        val field = fieldChecker()
+        val value = valueChecker()
+        userInput = Pair(field, value)
     }
-    var field: String? = userInput.split(';')[0]
+    var field: String? = userInput.first
     if (field.isNullOrBlank()) {
-        println("Обнаружено пустое имя поля в $stringNumber строке, введите новое имя или закройте программу и проверьте файл")
+        println("Обнаружено пустое имя поля в $stringField строке, введите новое имя или закройте программу и проверьте файл")
         field = fieldChecker()
     }
 
-    var value: String? = userInput.split(';')[1]
-
-    if (value == null || value.toDoubleOrNull() == null ||  value.toDouble()<.0 || value.toDouble()>99999999) {
-        println("Ошибка в значении поля($field) ($stringNumber строка), введите новое значение или закройте программу и проверьте файл")
+    var value: String? = userInput.second
+    if (value == null || value.toDoubleOrNull() == null || value.toDouble() < .0 || value.toDouble() > 99999999) {
+        println("Ошибка в значении поля $field ($stringValue строка), введите новое значение или закройте программу и проверьте файл")
         value = valueChecker()
     }
-    return OneFileString(field, value.toDouble())
+    return OneFileString(field, "%.2f".format(value.toFloat()).replace(',','.').toDouble())
 
 }
 
+/**
+@brief
+Функция обработки файла с входными данными
+@detailed
+Функция работает с файлом пользователя, проверяя, что в нём не слишком много строк, считывает имя диаграмм и проверяет
+возможность построения диаграммы рассеяния
+@return
+Функция возвращает имя файла, значения и информацию о возможности построения диаграммы рассеяния
+ */
 fun processFile(): UserInput {
     var userInputFile = readFile()
-    var scatterPlot=true
-    var probablyBadInput  = userInputFile.readLines()
-    var fileStrings:MutableList<String> = mutableListOf()
+    var scatterPlot = true
+    var probablyBadInput = userInputFile.readLines()
+    var fileStrings: MutableList<String> = mutableListOf()
     probablyBadInput.forEachIndexed { index, s ->
-        if (index==0 || s.isNotBlank())
+        if (index == 0 || s.isNotBlank())
             fileStrings.add(probablyBadInput[index])
     }
-    while (fileStrings.size>101)
-    {
-        println("В вашем файле слишком много строк, строк должно быть не более 101 (название + 100 полей), попробуйте другой файл или исправьте ошибку")
+    while (fileStrings.size > 201 || fileStrings.size%2==0) {
+        println("В вашем файле слишком много строк или не для всех полей есть значение, количество строк должно быть нечётным(с учётом названия) числом не более 201 (название + 100 полей и 100 значений), попробуйте другой файл")
         userInputFile = readFile()
-        probablyBadInput  = userInputFile.readLines()
+        probablyBadInput = userInputFile.readLines()
         fileStrings = mutableListOf()
         probablyBadInput.forEachIndexed { index, s ->
-            if (index==0 || s.isNotBlank())
+            if (index == 0 || s.isNotBlank())
                 fileStrings.add(probablyBadInput[index])
         }
 
@@ -112,17 +161,26 @@ fun processFile(): UserInput {
         println("Введите правильное название или завершите выполнение программы и исправьте файл")
         name = readLine()
     }
-    val res:MutableMap<String,Double> = mutableMapOf()
-    fileStrings.drop(1).forEachIndexed{index,it ->
-        val stringOfFile = processFileString(it,index+1)
-        if (stringOfFile.field.toDoubleOrNull()==null)
-            scatterPlot=false
-        res[stringOfFile.field]=stringOfFile.value
+    val res: MutableMap<String, MutableList<Double>> = mutableMapOf()
+    repeat(fileStrings.drop(1).size) { index ->
+        if (index % 2 == 0) {
+            val stringOfFile = processFileString(Pair(fileStrings[index+1], fileStrings[index + 2]), index + 1, index + 2)
+            if (stringOfFile.field.toDoubleOrNull() == null || stringOfFile.field.toDouble().toLong() > 99999999)
+                scatterPlot = false
+            if (!res.containsKey(stringOfFile.field))
+                res[stringOfFile.field] = mutableListOf()
+            res[stringOfFile.field]?.add(stringOfFile.value)
+        }
     }
-    return UserInput(name,res,scatterPlot)
+    return UserInput(name, res, scatterPlot)
 }
 
-
+/**
+@brief
+Функция обработки пользовательских команд
+@return
+Функция возвращает имя файла, значения и информацию о возможности построения диаграммы рассеяния
+ */
 fun inputData(): UserInput {
     println("Диаграмма строится по списку параметров и значений для них.")
     println("Если Вы хотите считывать данные из файла, напишите 'file', если же Вы хотите прописать их вручную - 'myInp'.")

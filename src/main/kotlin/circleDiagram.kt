@@ -4,21 +4,29 @@ import javax.swing.JPanel
 import kotlin.math.cos
 import kotlin.math.sin
 
-class CircleDiagram(private val data: Map<String,Double>) : JPanel() {
+class CircleDiagram(private val data: Map<String,List<Double>>) : JPanel() {
     private var extraSpace = 5f
 
     private fun sumOfData(): Double {
-        return data.values.sum()
+        return data.values.sumOf{it.sum()}
     }
 
+    /**
+    @brief
+    Функция генерирует список углов, для построения секторов в круговой диаграмме
+     */
     private fun angleListGenerator(): List<Double> {
         val angles: MutableList<Double> = mutableListOf()
         data.forEach {
-            angles.add(it.value * 360 / sumOfData())
+            angles.add(it.value.sum() * 360 / sumOfData())
         }
         return angles
     }
 
+    /**
+    @brief
+    Функция вывзывает все методы необходимые для рисования, передавая в них нужные параметры: цвета, углы поворота.
+     */
     override fun paint(g: Graphics) {
         super.paint(g)
         g as Graphics2D
@@ -32,8 +40,11 @@ class CircleDiagram(private val data: Map<String,Double>) : JPanel() {
             Color(255, 99, 71)
         )
         var currentStart = 270.0
-        angleListGenerator().forEachIndexed { index, angle ->
+        val angleList=angleListGenerator()
+        angleList.forEachIndexed { index, angle ->
             drawOneArc(g, currentStart, angle, colors[index % colors.size])
+            if (index==angleList.size-1)
+                drawOneArc(g, currentStart, angle, Color(138,43,226))
             currentStart += angle
         }
         currentStart = 270.0
@@ -43,7 +54,10 @@ class CircleDiagram(private val data: Map<String,Double>) : JPanel() {
         }
 
     }
-
+    /**
+    @brief
+    Функция рисует 1 сектор круговой диаграммы по стартовому углу и углу поворота, заполняя его нужным цветом
+     */
     private fun drawOneArc(g: Graphics2D, currentStart: Double, angle: Double, color: Color) {
         g.color = Color.BLACK
         g.stroke = BasicStroke(3f)
@@ -61,6 +75,10 @@ class CircleDiagram(private val data: Map<String,Double>) : JPanel() {
         g.fill(arc)
     }
 
+    /**
+    @brief
+    Функция рисует подпись для одного из секторов круговой диаграммы по стартовому углу и углу поворота, заполняя его нужным цветом
+     */
     private fun drawFields(g: Graphics2D, currentStart: Double, angle: Double, fieldNum: Int = 1){
         g.color = Color.BLACK
         g.font = Font("Mistral", Font.PLAIN, width/(50+(angleListGenerator().size+1)/2))

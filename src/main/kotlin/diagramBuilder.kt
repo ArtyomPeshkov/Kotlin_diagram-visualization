@@ -128,16 +128,18 @@ class DiagramBuilder(private val userInp: UserInput) {
         verticalLayout.add(title)
         verticalLayout.add(Box.createVerticalStrut(15))
         var num = 1
+        File("saves/saved_fields.txt").createNewFile()
+        val textSaver = File("saves/saved_fields.txt")
+        textSaver.writeText("")
         userInp.data.forEach {
             val horizontalLayout = Box.createHorizontalBox()
-            val fields = JLabel("Поле №1:")
-            fields.font = Font("TimesNewRoman", Font.BOLD, 25)
-            horizontalLayout.add(JLabel("Поле №${num++}:"))
+            horizontalLayout.add(JLabel("Поле №${num}:"))
             val fieldTextLabel = JLabel()
             val fieldString = if (it.key.length > 30)
                 it.key.substring(0, 19) + "..."
             else
                 it.key
+            textSaver.appendText("Поле №${num++}:${it.key}\n")
             fieldTextLabel.font = Font("PTMono", Font.BOLD, 15)
             fieldTextLabel.text = " $fieldString"
             fieldTextLabel.border = BorderFactory.createLineBorder(Color.BLACK)

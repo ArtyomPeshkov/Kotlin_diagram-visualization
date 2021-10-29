@@ -1,18 +1,8 @@
-import java.awt.*
-import java.awt.geom.Arc2D
-import java.awt.geom.Rectangle2D
-import java.awt.image.BufferedImage
 import java.io.File
-import java.io.IOException
-import java.lang.Double.max
-import java.lang.Math.PI
-import javax.imageio.ImageIO
-import javax.swing.*
-import kotlin.math.cos
-import kotlin.math.pow
-import kotlin.math.sin
-
-
+/**
+@brief
+Функция перезаписи файла
+ */
 fun rewriteFile(newFile: Collection<String>,destinationFile: File)
 {
     destinationFile.writeText("")
@@ -21,33 +11,39 @@ fun rewriteFile(newFile: Collection<String>,destinationFile: File)
         destinationFile.appendText(it + "\n")
     }
 }
-
-fun getRandomString(difChars: Int, length: Int): String {
-    val allowedChars = ('a' until 'a' + difChars)
+/**
+@brief
+Функция генерации рандомных значений для файла
+ */
+fun getRandomString(): Pair<String,String> {
     val nums = ('1' until '9')
-   // var str = (1..length).map { allowedChars.random() }.joinToString("")
-    var str=(1..3).map { nums.random() }.joinToString("")
-    str+=';'
-    str+=(1..3).map { nums.random() }.joinToString("")
-    return str
+    val strField=(1..3).map { nums.random() }.joinToString("")
+    val strVal=(1..3).map { nums.random() }.joinToString("")
+    return Pair(strField,strVal)
 }
 
-
-fun randomChanger() {
-    val strNumber = 10
-    val strLength = 6
-    val difChars = 26
+/**
+@brief
+Генератор рандомного inp.txt
+ */
+fun randomChanger(strNumber:Int) {
 
     val newFile :MutableList<String> = mutableListOf()
     repeat(strNumber)
     {
-        newFile.add(getRandomString(difChars, strLength))
+        val newStr=getRandomString()
+        newFile.add(newStr.first)
+        newFile.add(newStr.second)
     }
+    File("inp.txt").createNewFile()
     rewriteFile(newFile, File("inp.txt"))
 }
 
 fun main(args: Array<String>) {
-    randomChanger()
+    println("Добро пожаловать в построитель диаграмм.")
+    println("Для вас будет сгенерирован тестовый файл inp.txt, чтобы вы могли проверить работоспособность программы")
+
+    randomChanger((2..100).random())
     val userInput = inputData()
     val app = DiagramBuilder(userInput)
     app.show()
