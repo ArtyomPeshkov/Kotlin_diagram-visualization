@@ -1,6 +1,6 @@
 import java.io.File
 
-data  class UserInput(val name: String,val data: Map<String, Double>)
+data  class UserInput(val name: String,val data: Map<String, Double>, val scatterPlot: Boolean)
 
 fun readFile(): File {
     println("Введите имя файла:")
@@ -34,6 +34,7 @@ fun valueChecker(): String {
 
 fun userInputData(): UserInput {
     val res: MutableMap<String, Double> = mutableMapOf()
+    var scatterPlot=true
     println("Введите название диаграммы")
     var name = readLine()
     while (name.isNullOrBlank()) {
@@ -52,10 +53,12 @@ fun userInputData(): UserInput {
     repeat(number.toInt())
     {
         val field = fieldChecker()
+        if (field.toDoubleOrNull() == null)
+            scatterPlot=false
         val value = valueChecker()
         res[field] = value.toDouble()
     }
-    return UserInput(name, res)
+    return UserInput(name, res,scatterPlot)
 }
 data class OneFileString(val field: String, val value: Double)
 
@@ -84,6 +87,7 @@ fun processFileString(input: String,stringNumber:Int): OneFileString {
 
 fun processFile(): UserInput {
     var userInputFile = readFile()
+    var scatterPlot=true
     var probablyBadInput  = userInputFile.readLines()
     var fileStrings:MutableList<String> = mutableListOf()
     probablyBadInput.forEachIndexed { index, s ->
@@ -111,9 +115,11 @@ fun processFile(): UserInput {
     val res:MutableMap<String,Double> = mutableMapOf()
     fileStrings.drop(1).forEachIndexed{index,it ->
         val stringOfFile = processFileString(it,index+1)
+        if (stringOfFile.field.toDoubleOrNull()==null)
+            scatterPlot=false
         res[stringOfFile.field]=stringOfFile.value
     }
-    return UserInput(name,res)
+    return UserInput(name,res,scatterPlot)
 }
 
 

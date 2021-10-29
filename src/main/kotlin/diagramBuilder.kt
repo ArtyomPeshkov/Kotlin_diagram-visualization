@@ -11,6 +11,7 @@ class DiagramBuilder(private val userInp: UserInput) {
     private var nameLabel: JLabel? = null
     private var circleDiagram: CircleDiagram? = null
     private var diagram: Diagram? = null
+    private var scatter: ScatterPlot? = null
     private var backgroundColors: MutableList<Int> = mutableListOf(255,255,255)
 
     init {
@@ -93,6 +94,8 @@ class DiagramBuilder(private val userInp: UserInput) {
 
         createButton("Круговая диаграмма",verticalLayout,this::drawCircleDiagram)
         createButton("Диаграмма",verticalLayout,this::drawDiagram)
+        if (userInp.scatterPlot)
+            createButton("Диаграмма рассеяния",verticalLayout,this::drawScatter)
         verticalLayout.add(Box.createVerticalStrut(mainWindow!!.height / 20))
         createButton("Сохранить картинку",verticalLayout,this::saveImage)
         verticalLayout.add(Box.createVerticalStrut(mainWindow!!.height / 20))
@@ -163,6 +166,15 @@ class DiagramBuilder(private val userInp: UserInput) {
         diagram = Diagram(userInp.data)
         diagram?.background = Color(backgroundColors[0], backgroundColors[1], backgroundColors[2])
         mainWindow!!.contentPane.add(diagram)
+        mainWindow?.isVisible = true
+    }
+
+    private fun drawScatter() {
+        if (mainWindow!!.contentPane.components.size == 4)
+            mainWindow!!.contentPane.remove(mainWindow!!.contentPane.components.last())
+        scatter = ScatterPlot(userInp.data)
+        scatter?.background = Color(backgroundColors[0], backgroundColors[1], backgroundColors[2])
+        mainWindow!!.contentPane.add(scatter)
         mainWindow?.isVisible = true
     }
 

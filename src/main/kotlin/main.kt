@@ -25,7 +25,8 @@ fun rewriteFile(newFile: Collection<String>,destinationFile: File)
 fun getRandomString(difChars: Int, length: Int): String {
     val allowedChars = ('a' until 'a' + difChars)
     val nums = ('1' until '9')
-    var str = (1..length).map { allowedChars.random() }.joinToString("")
+   // var str = (1..length).map { allowedChars.random() }.joinToString("")
+    var str=(1..3).map { nums.random() }.joinToString("")
     str+=';'
     str+=(1..3).map { nums.random() }.joinToString("")
     return str
@@ -33,7 +34,7 @@ fun getRandomString(difChars: Int, length: Int): String {
 
 
 fun randomChanger() {
-    val strNumber = 100
+    val strNumber = 10
     val strLength = 6
     val difChars = 26
 
